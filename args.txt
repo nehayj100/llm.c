@@ -21,7 +21,7 @@ python train_gpt2.py --input_bin="dev/data/fineweb10B/fineweb_train_*.bin" \
                       --val_loss_every=250 \
                       --sample_every=20000 \
                       --device="cuda" \
-                      --num_iterations=1 \
+                      --num_iterations=5000 \
                       --compile=1 \
                       --tensorcores=1 
 
@@ -29,6 +29,7 @@ python train_gpt2.py --input_bin="dev/data/fineweb10B/fineweb_train_*.bin" \
 
 //
 
+// working!!
 
 srun --nodes=1 --cpus-per-task=32 --mem=128g --gres=gpu:a100:1  --time=00:10:00 --pty bash -i
 
