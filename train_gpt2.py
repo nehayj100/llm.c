@@ -536,6 +536,7 @@ if __name__ == "__main__":
     import time
     import argparse
     import tiktoken
+    print0("Lets begin")
     print0(f"Running pytorch {torch.version.__version__}")
 
     # default settings will overfit a tiny batch of data

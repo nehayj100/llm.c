@@ -1,0 +1,120 @@
+rm -rf dev/data
+ln -s /scratch/group/csce689609/data dev/
+
+module load GCC/12.3
+module load CUDA/12.3
+module load WebProxy
+
+srun --nodes=1 --cpus-per-task=32 --mem=128g --gres=gpu:a100:1  --time=00:10:00 --pty bash -i
+
+python train_gpt2.py --input_bin="dev/data/fineweb10B/fineweb_train_*.bin" \
+                      --input_val_bin="dev/data/fineweb10B/fineweb_val_*.bin" \
+                      --output_dir="log124M" \
+                      --batch_size=32 \
+                      --sequence_length=1024 \
+                      --total_batch_size=524288 \
+                      --zero_stage=1 \
+                      --weight_decay=0.1 \
+                      --learning_rate=0.0006 \
+                      --learning_rate_decay_frac=0.0 \
+                      --warmup_iters=700 \
+                      --val_loss_every=250 \
+                      --sample_every=20000 \
+                      --device="cuda" \
+                      --num_iterations=1 \
+                      --compile=1 \
+                      --tensorcores=1 
+
+
+
+//
+
+
+srun --nodes=1 --cpus-per-task=32 --mem=128g --gres=gpu:a100:1  --time=00:10:00 --pty bash -i
+
+conda activate my_env
+module load GCC/12.3
+module load CUDA/12.3
+module load WebProxy
+
+python train_gpt2.py --input_bin="dev/data/fineweb10B/fineweb_train_*.bin" \
+                      --input_val_bin="dev/data/fineweb10B/fineweb_val_*.bin" \
+                      --output_dir="log124M" \
+                      --batch_size=2 \
+                      --write_tensors=0 \
+                      --sequence_length=1024 \
+                      --total_batch_size=32768 \
+                      --zero_stage=1 \
+                      --weight_decay=0.1 \
+                      --learning_rate=0.0006 \
+                      --learning_rate_decay_frac=0.0 \
+                      --warmup_iters=2 \
+                      --val_loss_every=1 \
+                      --sample_every=1 \
+                      --device="cuda" \
+                      --num_iterations=5 \
+                      --compile=1 \
+                      --model="d12" \
+                      --dtype=bfloat16 \
+                      --tensorcores=1 
+
+
+--write_tensors=0 --num_iterations=50 --sequence_length=1024 --compile=1 --tensorcores=1 --dtype=bfloat16
+
+couldnt find the args in py:
+#####       --embedding "d12" \
+#####       --resume 0 \
+###  --h 1  ## run hellaswag eval?
+ #### --num_iterations 5000 \
+
+CUDA:
+./train_gpt2cu     
+-i "dev/data/fineweb10B/fineweb_train_*.bin"      train data filename pattern
+-j "dev/data/fineweb10B/fineweb_val_*.bin"      val data filename pattern
+-o log124M     output log dir (default = NULL, no logging)
+-e "d12"    input .bin filename or descriptor, see code comments as docs. (default = gpt2_124M_bf16.bin)
+-b 32       (per-GPU, micro) batch size B (default = 4)
+-t 1024    sequence length T (default = 1024)
+-d 524288    total desired batch size (default = B * T * num_processes, i.e. no grad accumulation 
+ -r 0        recompute: less memory but less speed. (default = 1), 0|1|2 = none,gelu,gelu+ln
+ -z 1       zero_stage, Zero Optimization Stage, 0,1,2,3 (default = 0)
+ -c 0.1     weight decay (default = 0.0f)
+ -l 0.0006     learning rate (default = 3e-4f)
+ -q 0.0     learning rate decay: final fraction, at end of training (default = 1.0 (no decay))
+ -u 700     learning rate warmup iterations (default = 0, no warmup)
+ -n 5000    write optimization checkpoints every how many steps? (default 0, don't)
+  -v 250     val_loss_every, how often we evaluate val loss (default = 20)
+  -s 20000     sample_every, how often we inference the model (default = 20)
+  -h 1        hellaswag eval run? (default = 0)
+
+
+
+
+  --------------
+  LLM Questions:
+
+1. Issue in download of vocab while tiktoken is init
+2. Show args:
+3. Cuda unavailable comes even after getting a job allocated
+4. Compile model?
+5. Run for 10mins: do # iteration matter and coda gets unavailable
+
+python train_gpt2.py --input_bin="dev/data/fineweb10B/fineweb_train_*.bin" \
+                      --input_val_bin="dev/data/fineweb10B/fineweb_val_*.bin" \
+                      --output_dir="log124M" \
+                      --batch_size=32 \
+                      --sequence_length=1024 \
+                      --total_batch_size=524288 \
+                      --zero_stage=1 \
+                      --weight_decay=0.1 \
+                      --learning_rate=0.0006 \
+                      --learning_rate_decay_frac=0.0 \
+                      --warmup_iters=700 \
+                      --val_loss_every=250 \
+                      --sample_every=20000 \
+                      --device="cuda" \
+                      --num_iterations=1 \
+                      --compile=1 \
+                      --tensorcores=1 
+
+
