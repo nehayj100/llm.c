@@ -42,6 +42,11 @@ class NewGELU(nn.Module):
     def forward(self, input):
         return 0.5 * input * (1.0 + torch.tanh(math.sqrt(2.0 / math.pi) * (input + 0.044715 * torch.pow(input, 3.0))))
 
+class NewSwiGLU(nn.Module):
+    def forward(self, input):
+        swish = input * torch.sigmoid(input)
+        return swish * torch.sigmoid(input)
+
 # using a global to toggle flash-attention
 FLASH = 0
 
@@ -90,7 +95,7 @@ class MLP(nn.Module):
     def __init__(self, config):
         super().__init__()
         self.c_fc    = nn.Linear(config.n_embd, 4 * config.n_embd)
-        self.gelu    = NewGELU()
+        self.gelu    = NewSwiGLU()
         self.c_proj  = nn.Linear(4 * config.n_embd, config.n_embd)
         self.c_proj.LLMC_RESIDUAL_SCALE_FLAG = 1
 
@@ -100,13 +105,23 @@ class MLP(nn.Module):
         x = self.c_proj(x)
         return x
 
+class RMSNorm(nn.Module):
+    def __init__(self, dim, eps=1e-8):
+        super().__init__()
+        self.eps = eps
+        self.weight = nn.Parameter(torch.ones(dim))
+
+    def forward(self, x):
+        norm = torch.sqrt(x.pow(2).mean(dim=-1, keepdim=True) + self.eps)
+        return x * (self.weight / norm)
+
 class Block(nn.Module):
 
     def __init__(self, config):
         super().__init__()
-        self.ln_1 = nn.LayerNorm(config.n_embd)
+        self.ln_1 = nn.RMSNorm(config.n_embd)
         self.attn = CausalSelfAttention(config)
-        self.ln_2 = nn.LayerNorm(config.n_embd)
+        self.ln_2 = nn.RMSNorm(config.n_embd)
         self.mlp = MLP(config)
 
     def forward(self, x):
@@ -135,7 +150,7 @@ class GPT(nn.Module):
             wte = nn.Embedding(config.vocab_size, config.n_embd),
             wpe = nn.Embedding(config.block_size, config.n_embd),
             h = nn.ModuleList([Block(config) for _ in range(config.n_layer)]),
-            ln_f = nn.LayerNorm(config.n_embd),
+            ln_f = nn.RMSNorm(config.n_embd),
         ))
         self.lm_head = nn.Linear(config.n_embd, config.vocab_size, bias=False)
         self.lm_head.LLMC_SKIP_INIT = 1 # don't init this one, we will tie weights
